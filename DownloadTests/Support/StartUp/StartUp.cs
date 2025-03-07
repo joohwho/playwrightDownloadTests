@@ -21,6 +21,7 @@ public class StartUp(IObjectContainer objectContainer)
         container.RegisterInstanceAs<IPage>(driver.Page);
 
         container.RegisterTypeAs<UploadAppPage, IUploadAppPage>();
+        container.RegisterTypeAs<DownloadAppPage, IDownloadAppPage>();
     }
 
     [AfterTestRun]

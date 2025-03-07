@@ -22,23 +22,13 @@ public class Hooks(
     private static readonly ExtentReports _extent = ExtentReportManager.GetExtentReport();
 
     [BeforeTestRun]
-    public static void BeforeTestRun()
-    {
-        Console.WriteLine("Starting Tests...");
-    }
+    public static void BeforeTestRun() => Console.WriteLine("Starting Tests...");
 
     [BeforeFeature]
-    public static void BeforeFeature(FeatureContext featureContext)
-    {
-        _feature = _extent.CreateTest<Feature>(featureContext.FeatureInfo.Title);
-    }
+    public static void BeforeFeature(FeatureContext featureContext) => _feature = _extent.CreateTest<Feature>(featureContext.FeatureInfo.Title);
 
     [BeforeScenario]
-    public void BeforeScenario(IPage page)
-    {
-        _scenario = _feature.CreateNode<Scenario>(_scenarioContext.ScenarioInfo.Title);
-        _page = page;
-    }
+    public void BeforeScenario() => _scenario = _feature.CreateNode<Scenario>(_scenarioContext.ScenarioInfo.Title);
 
     [AfterStep]
     public async Task AfterStep()
@@ -48,63 +38,48 @@ public class Hooks(
         var stepNode = _scenario.CreateNode(new GherkinKeyword(stepType), stepName);
         string screenshotBase64 = await CaptureScreenshotBase64();
 
-        stepNode.Info($"<img src='data:image/png;base64,{screenshotBase64}'/>");
-
         switch (_scenarioContext.StepContext.Status)
         {
             case ScenarioExecutionStatus.OK:
-                stepNode.Pass("Step executed successfully");
+                stepNode.Pass("[Step executed successfully]");
                 break;
 
             case ScenarioExecutionStatus.StepDefinitionPending:
-                stepNode.Info("Step definition pending");
+                stepNode.Info("[Step definition pending]");
                 break;
 
             case ScenarioExecutionStatus.UndefinedStep:
-                stepNode.Fail("Step is undefined (no implementation)");
+                stepNode.Fail("[Step is undefined (no implementation)]");
                 break;
 
             case ScenarioExecutionStatus.BindingError:
-                stepNode.Fail("Step binding error");
+                stepNode.Fail("[Step binding error]");
                 break;
 
             case ScenarioExecutionStatus.TestError:
-                stepNode.Fail(_scenarioContext.TestError?.Message ?? "Unknown error");
+                stepNode.Fail(_scenarioContext.TestError?.Message ?? "[Unknown error]");
                 break;
 
             case ScenarioExecutionStatus.Skipped:
-                stepNode.Skip("Step was skipped");
+                stepNode.Skip("[Step was skipped]");
                 break;
 
             default:
-                stepNode.Info("Unknown step status");
+                stepNode.Info("[Unknown step status]");
                 break;
         }
+
+        stepNode.Info($"<img src='data:image/png;base64,{screenshotBase64}'/>");
     }
 
     [AfterScenario]
-    public void AfterScenario()
-    {
-        Console.WriteLine($"Finishing scenario: {_scenarioContext.ScenarioInfo.Title}");
-    }
+    public void AfterScenario() => Console.WriteLine($"Finishing scenario: {_scenarioContext.ScenarioInfo.Title}");
 
     [AfterFeature]
-    public static void AfterFeature()
-    {
-        Console.WriteLine("Finishing Feature...");
-    }
+    public static void AfterFeature() => Console.WriteLine("Finishing Feature...");
 
     [AfterTestRun]
-    public static void AfterTestRun()
-    {
-        _extent.Flush();
-    }
+    public static void AfterTestRun() => _extent.Flush();
 
-    private async Task<string> CaptureScreenshotBase64()
-    {
-        var screenshotBytes = await _page.ScreenshotAsync();
-        string base64Image = Convert.ToBase64String(screenshotBytes);
-
-        return base64Image;
-    }
+    private async Task<string> CaptureScreenshotBase64() => Convert.ToBase64String(await _page.ScreenshotAsync());
 }
